@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "ark-rpc": "github:arkecosystem/ark-rpc#master",
-    "axios": "^0.18.0",
-    "request": "^2.88.0"
+    "axios": "^0.18.0"
   }
 }
