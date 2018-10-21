@@ -29,50 +29,50 @@ async function cliFlow() {
         passphrase: null
     }
 
-      await cliAsk('Press Enter if you want to perform transaction or press Ctrl+Q to exit\n');
-      let network = await cliAsk('Enter network name (mainnet or devnet): ');
-      while(network !== "mainnet" && network !== "devnet"){
+    await cliAsk('Press Enter if you want to perform transaction or press Ctrl+Q to exit\n');
+    let network = await cliAsk('Enter network name (mainnet or devnet): ');
+    while(network !== "mainnet" && network !== "devnet"){
+        console.log("Only 2 networks available");
+        network = await cliAsk('Enter network name (mainnet or devnet): ');
+    }
+    transactionParams.recipientId = await cliAsk('Enter recipientId: ');
+    transactionParams.amount = await cliAsk('Enter amount (in satoshis): ');
+    while(transactionParams.amount < 1){
+        console.log("You can't send less then 1 satoshi");
+        transactionParams.amount = await cliAsk('Enter amount (in satoshis): ');
+    }
+    transactionParams.passphrase = await cliAsk('Enter passphrase: ');
+
+    const creationResponse = await createTransaction(network, transactionParams);
+
+    if(creationResponse.data.success){
+      const transactionId = creationResponse.data.transaction.id;
+      await cliAsk(`Your transaction id is ${transactionId}\nPress Enter if you want to broadcast this transaction or Ctrl+Q to exit`);
+      await cliAsk('Select network again (mainnet or devnet): ');
+      while(network !== "mainnet" && network !== "devnet") {
           console.log("Only 2 networks available");
           network = await cliAsk('Enter network name (mainnet or devnet): ');
       }
-      transactionParams.recipientId = await cliAsk('Enter recipientId: ');
-      transactionParams.amount = await cliAsk('Enter amount (in satoshis): ');
-      while(transactionParams.amount < 1){
-          console.log("You can't send less then 1 satoshi");
-          transactionParams.amount = await cliAsk('Enter amount (in satoshis): ');
-      }
-      transactionParams.passphrase = await cliAsk('Enter passphrase: ');
 
-      const creationResponse = await createTransaction(network, transactionParams);
+      const broadcastingResponse = await broadcastTransaction(network, {id: transactionId});
 
-      if(creationResponse.data.success){
-        const transactionId = creationResponse.data.transaction.id;
-        await cliAsk(`Your transaction id is ${transactionId}\nPress Enter if you want to broadcast this transaction or Ctrl+Q to exit`);
-        await cliAsk('Select network again (mainnet or devnet): ');
-        while(network !== "mainnet" && network !== "devnet") {
-            console.log("Only 2 networks available");
-            network = await cliAsk('Enter network name (mainnet or devnet): ');
-        }
-
-        const broadcastingResponse = await broadcastTransaction(network, {id: transactionId});
-
-        if(broadcastingResponse.data.success){
-          console.log("Transaction successfully broadcasted\n");
-          cliFlow();
-        } else {
-          console.log("An error occurred during the broadcast: ", broadcastingResponse.data.error);
-          cliFlow();
-        }
-
+      if(broadcastingResponse.data.success){
+        console.log("Transaction successfully broadcasted\n");
+        cliFlow();
       } else {
-        console.log("An error occurred during the transaction creation: ", creationResponse.data.error);
+        console.log("An error occurred during the broadcast: ", broadcastingResponse.data.error);
         cliFlow();
       }
 
-    } catch(e){
-      console.log("Error! " + e);
-      process.exit();
+    } else {
+      console.log("An error occurred during the transaction creation: ", creationResponse.data.error);
+      cliFlow();
     }
+
+  } catch(e){
+    console.log("Error! " + e);
+    process.exit();
+  }
 }
 
 cliFlow();
